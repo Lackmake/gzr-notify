@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Time Calculator</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="manifest" href="manifest.json" />
+    <style>
+        :root {
+            --eerie-black: #1b2021ff;
+            --ebony: #51513dff;
+            --moss-green: #a6a867ff;
+            --vanilla: #e3dc95ff;
+            --pearl: #e3dcc2ff;
+
+            --background-color: #eee;
+            --text-color: #111;
+            --primary-color: #e3dc95ff;
+            --progress-bar-background: #1f1f1f;
+            --progress-bar-border: #424242;
+            --progress-color: #a6a867ff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background-color: #121212;
+                --text-color: #ffffff;
+                --primary-color: #e3dc95ff;
+                --progress-bar-background: #1f1f1f;
+                --progress-bar-border: #424242;
+                --progress-color: #a6a867ff;
+            }
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            text-align: center;
+            margin: 50px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        h1 {
+            color: var(--primary-color);
+        }
+
+        #progress-bar {
+            width: 50%;
+            margin-top: 20px;
+            background-color: var(--progress-bar-background);
+            border: 1px solid var(--progress-bar-border);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        #progress {
+            height: 30px;
+            background-color: var(--progress-color);
+            text-align: center;
+            line-height: 30px;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Work Time Calculator</h1>
+
+    <div id="loginTime"></div>
+    <div id="endOfWorkTime"></div>
+    <div id="timeRemaining"></div>
+
+    <div id="progress-bar">
+        <div id="progress">0.00%</div>
+    </div>
+    <button onclick="testNotification()">Test Notification</button>
+
+    <div>
+        <h2>Settings</h2>
+        <p>Override Work Hours: <input id="workingHoursInput" type="number" value="8.2" /><button
+                onclick="setWorkHoursOverride()">Set</button></p>
+    </div>
+
+
+    <script>
+        let workingHours = null;
+        let notificationShown = false; 
+
+        function calculateWorkTime() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const loginTimestamp = parseInt(urlParams.get('loginTimestamp')) || Date.now();
+
+            const workHours = (workingHours || 8.2) * 60 * 60 * 1000;
+            console.log(workHours)
+            const endOfWorkTime = new Date(loginTimestamp + workHours);
+            const currentTime = new Date();
+            const timeRemaining = Math.max(0, endOfWorkTime - currentTime);
+            const progress = Math.min(100, (1 - timeRemaining / workHours) * 100);
+
+            document.getElementById('loginTime').innerText = `Login Time: ${new Date(loginTimestamp).toLocaleTimeString()}`;
+            document.getElementById('endOfWorkTime').innerText = `End of Work Time: ${endOfWorkTime.toLocaleTimeString()}`;
+            document.getElementById('timeRemaining').innerText = `Time Remaining: ${formatTime(timeRemaining)}`;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            document.getElementById('progress').innerText = `${progress.toFixed(2)}%`;
+
+            if (timeRemaining <= 15 * 60 * 1000 && !notificationShown) {
+                // Show notification
+                notificationShown = true; 
+                showNotification('Time is running out!', `Only ${formatTime(timeRemaining)} left!`);
+            }
+        }
+
+        function formatTime(milliseconds) {
+            const hours = Math.floor(milliseconds / (60 * 60 * 1000));
+            const minutes = Math.floor((milliseconds % (60 * 60 * 1000)) / (60 * 1000));
+            const seconds = Math.floor((milliseconds % (60 * 1000)) / 1000);
+
+            return `${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        function showNotification(title, body) {
+            if (Notification.permission === 'granted') {
+                new Notification(title, { body });
+            } else if (Notification.permission !== 'denied') {
+                Notification.requestPermission().then((permission) => {
+                    if (permission === 'granted') {
+                        new Notification(title, { body });
+                    }
+                });
+            }
+        }
+
+        function testNotification() {
+            showNotification('Test Notification', 'This is a test notification.');
+        }
+
+        function setWorkHoursOverride() {
+            // Get user input for overridden work hours
+            const inputHours = document.getElementById("workingHoursInput").value;
+            console.log(inputHours)
+            // Validate and update the workHoursOverride variable
+            if (inputHours !== null) {
+                const parsedHours = parseFloat(inputHours);
+                console.log(parsedHours)
+                if (!isNaN(parsedHours) && parsedHours > 0) {
+                    workingHours = parsedHours;
+                    calculateWorkTime(); // Recalculate based on the new work hours
+                } else {
+                    alert('Invalid input. Please enter a valid positive number for work hours.');
+                }
+            }
+        }
+
+        function convertToUnixTimestamp(bootTime) {
+        // Extract relevant parts from the boot time format
+        const datePart = bootTime.substring(0, 8);
+        const timePart = bootTime.substring(8, 14);
+        const offsetPart = bootTime.substring(14);
+
+        // Create a formatted date string
+        const formattedDate = `${datePart.substring(0, 4)}-${datePart.substring(4, 6)}-${datePart.substring(6)}T${timePart.substring(0, 2)}:${timePart.substring(2, 4)}:${timePart.substring(4)}`;
+
+        // Create a Date object with the formatted date
+        const dateObject = new Date(formattedDate);
+
+        // Calculate the Unix timestamp
+        const unixTimestamp = Math.floor(dateObject.getTime());
+            console.log(unixTimestamp);
+        return unixTimestamp;
+    }
+
+        calculateWorkTime();
+        setInterval(calculateWorkTime, 1000); // Update every second
+
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then((registration) => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch((error) => {
+                    console.error('Service Worker registration failed:', error);
+                });
+        }
+    </script>
+
+</body>
+
+</html>
