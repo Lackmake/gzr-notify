@@ -2,8 +2,8 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
       caches.open('work-time-calculator-v1').then((cache) => {
         return cache.addAll([
-          '/',
-          '/index.html',
+          './',
+          './index.html',
         //   '/icon.png', // Include the path to your icon file
           // Add other static assets as needed
         ]);
