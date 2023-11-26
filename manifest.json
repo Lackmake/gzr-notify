@@ -2,13 +2,13 @@
     "name": "Work Time Calculator",
     "short_name": "WorkTime",
     "description": "A simple work time calculator",
-    "start_url": "/index.html",
+    "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#A6A867",
     "icons": [
       {
-        "src": "/icon.png",
+        "src": "./icon.png",
         "sizes": "192x192",
         "type": "image/png"
       }
